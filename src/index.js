@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useEffect, useLayoutEffect }  from 'react';
+import React, { useRef, useMemo, useState, useEffect, useLayoutEffect, useCallback }  from 'react';
 
 const enrichFragments = (fragments) => {
   var totalLength = 0
@@ -30,7 +30,6 @@ function FragmentPlayerProvider({children, fragments, }) {
   const [currentTime, setCurrentTime] = useState(0)
   const {totalLength, enrichedFragments} = useMemo(() => enrichFragments(fragments), [fragments])
   const currentVideoIdx = getFragmentIdx(enrichedFragments, currentTime)
-  console.log('currentTime', currentTime)
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
 
@@ -66,7 +65,17 @@ function FragmentPlayerProvider({children, fragments, }) {
     return tmp
   }), [enrichedFragments])
 
-
+  useEffect(() => {
+    const video = videos[currentVideoIdx]
+    const onCanPlay = () => video.play()
+    if (playing && video) {
+      video.addEventListener('canplay', onCanPlay)
+    }
+    if (video.readyState !== 4) {
+      video.load()
+    }
+    return () => video.removeEventListener('canplay', onCanPlay)
+  }, [currentVideoIdx, playing, videos])
 
   useEffect(() => {
     if (ready) {
@@ -75,7 +84,7 @@ function FragmentPlayerProvider({children, fragments, }) {
         const tmp = video
         tmp.load()
         tmp.onloadeddata = () => {
-          console.log('loaded video ', idx + 1)
+          console.log('loaded fragment ', idx + 1)
         }
       })
     }
@@ -106,6 +115,12 @@ function FragmentPlayerProvider({children, fragments, }) {
   }
 
   useEffect(() => {
+    if (playing) {
+      videos[currentVideoIdx].play()
+    }
+  }, [currentVideoIdx, currentTime, playing])
+
+  useEffect(() => {
     for (var video of videos) {
       video.pause()
     }
@@ -114,9 +129,6 @@ function FragmentPlayerProvider({children, fragments, }) {
     }
     const fragment = enrichedFragments[currentVideoIdx]
     videos[currentVideoIdx].currentTime = currentTime - fragment.startAt + fragment?.fragmentBegin
-    if (playing) {
-      videos[currentVideoIdx].play()
-    }
 
     canvasRef.current.width = width
     canvasRef.current.height = height
