@@ -33,15 +33,6 @@ function FragmentPlayerProvider({children, fragments, }) {
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
 
-  useEffect(() => {
-    if (ready) {
-      console.log('Fragment Player Ready!' )
-    }
-    else {
-      console.log('Fragment Player Intializing...')
-    }
-  }, [ready])
-
   useLayoutEffect(() => {
     const onResize = () => {
       setSize({
@@ -65,14 +56,33 @@ function FragmentPlayerProvider({children, fragments, }) {
     tmp.src = f.src
     tmp.preload = "auto"
     tmp.currentTime = f.fragmentBegin
-    tmp.load()
     if (!idx) {
+      tmp.load()
       tmp.onloadeddata = () => {
         setReady(true)
       }
     }
     return tmp
   }), [enrichedFragments])
+
+
+
+  useEffect(() => {
+    if (ready) {
+      console.log('Fragment Player Ready!' )
+      videos.slice(1)?.map((video, idx) => {
+        const tmp = video
+        tmp.load()
+        tmp.onloadeddata = () => {
+          console.log('loaded video ', idx + 1)
+        }
+      })
+    }
+    else {
+      console.log('Fragment Player Intializing...')
+    }
+  }, [ready])
+
 
   const seekTo = (seconds) => {
     const newIdx = getFragmentIdx(enrichedFragments, currentTime)
@@ -93,6 +103,12 @@ function FragmentPlayerProvider({children, fragments, }) {
       videos[currentVideoIdx].play()
     }
   }
+
+  useEffect(() => {
+    if (playing) {
+      videos[currentVideoIdx].play()
+    }
+  }, [playing, currentVideoIdx])
 
   useEffect(() => {
     for (var video of videos) {
