@@ -32,7 +32,15 @@ function FragmentPlayerProvider({children, fragments, }) {
   const currentVideoIdx = getFragmentIdx(enrichedFragments, currentTime)
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
-  console.log('ready', ready)
+
+  useEffect(() => {
+    if (ready) {
+      console.log('Fragment Player Ready!' )
+    }
+    else {
+      console.log('Fragment Player Intializing...')
+    }
+  }, [ready])
 
   useLayoutEffect(() => {
     const onResize = () => {
