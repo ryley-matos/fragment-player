@@ -26,10 +26,11 @@ function FragmentPlayerProvider({children, fragments, }) {
   const canvasRef = useRef()
   const contentRef = useRef()
   const drawInterval = useRef()
-  const [playing, setPlaying] = useState(true)
+  const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const {totalLength, enrichedFragments} = useMemo(() => enrichFragments(fragments), [fragments])
   const currentVideoIdx = getFragmentIdx(enrichedFragments, currentTime)
+  console.log('currentTime', currentTime)
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
 
@@ -103,12 +104,6 @@ function FragmentPlayerProvider({children, fragments, }) {
       videos[currentVideoIdx].play()
     }
   }
-
-  useEffect(() => {
-    if (playing) {
-      videos[currentVideoIdx].play()
-    }
-  }, [playing, currentVideoIdx])
 
   useEffect(() => {
     for (var video of videos) {
