@@ -31,6 +31,8 @@ function FragmentPlayerProvider({children, fragments, }) {
   const {totalLength, enrichedFragments} = useMemo(() => enrichFragments(fragments), [fragments])
   const currentVideoIdx = getFragmentIdx(enrichedFragments, currentTime)
   const [{ width, height }, setSize] = useState({})
+  const [ready, setReady] = useState(false)
+  console.log('ready', ready)
 
   useLayoutEffect(() => {
     const onResize = () => {
@@ -56,6 +58,11 @@ function FragmentPlayerProvider({children, fragments, }) {
     tmp.preload = "auto"
     tmp.currentTime = f.fragmentBegin
     tmp.load()
+    if (!idx) {
+      tmp.onloadeddata = () => {
+        setReady(true)
+      }
+    }
     return tmp
   }), [enrichedFragments])
 
@@ -83,7 +90,7 @@ function FragmentPlayerProvider({children, fragments, }) {
     for (var video of videos) {
       video.pause()
     }
-    if (!videos[currentVideoIdx]) {
+    if (!videos[currentVideoIdx] || !ready) {
       return
     }
     const fragment = enrichedFragments[currentVideoIdx]
@@ -109,7 +116,7 @@ function FragmentPlayerProvider({children, fragments, }) {
       }
       ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
     }, 30)
-  }, [currentVideoIdx, width, height,])
+  }, [currentVideoIdx, width, height, ready])
 
   const video = 
     <div style={{width: '100%', height: '100%',}} ref={contentRef}>
