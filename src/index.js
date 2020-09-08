@@ -38,6 +38,27 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
 
+  
+
+  const togglePlay = () => {
+    if (playing) {
+      setPlaying(false)
+      videos[currentVideoIdx].pause()
+    }
+    else {
+      setPlaying(true)
+      console.log('set playing')
+      videos[currentVideoIdx].play()
+    }
+  }
+
+  const video = loadVideo ? 
+    <div style={{width: '100%', height: '100%', }} ref={contentRef}>
+      <canvas ref={canvasRef} style={{width: '100%'}}  onClick={togglePlay}/>
+    </div>
+    :
+    null
+
   useLayoutEffect(() => {
     const onResize = () => {
       setSize({
@@ -54,25 +75,21 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       width: contentRef?.current?.clientWidth,
       height: contentRef?.current?.clientHeight,
     })
-  }, [canvasRef?.current, contentRef?.current, loadVideo])
+  }, [canvasRef?.current, contentRef?.current, loadVideo, ready])
 
   const videos = useMemo(() => enrichedFragments?.map((f, idx) => {
     const tmp = document.createElement('video')
     tmp.src = f.src
     tmp.preload = "auto"
     tmp.currentTime = f.fragmentBegin
-    if (!idx) {
+    if (!idx || !loadVideo) {
       tmp.load()
       tmp.onloadeddata = () => {
         setReady(true)
-        if (canvasRef?.current) {
-          const ctx = canvasRef?.current?.getContext('2d')
-          ctx.drawImage(videos[currentVideoIdx] ,0, 0, width, height)
-        }
       }
     }
     return tmp
-  }), [enrichedFragments, canvasRef?.current, loadVideo])
+  }), [enrichedFragments, canvasRef?.current, loadVideo,])
   
 
   useEffect(() => {
@@ -111,25 +128,12 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
 
 
   const seekTo = (seconds) => {
-    console.log('seeking to', seconds)
     const newIdx = getFragmentIdx(enrichedFragments, currentTime)
     if (newIdx === currentVideoIdx) {
       const fragment = enrichedFragments[currentVideoIdx]
       videos[currentVideoIdx].currentTime = seconds - fragment.startAt + fragment?.fragmentBegin
     }
-    console.log('setting current time', seconds)
     setCurrentTime(seconds)
-  }
-
-  const togglePlay = () => {
-    if (playing) {
-      setPlaying(false)
-      videos[currentVideoIdx].pause()
-    }
-    else {
-      setPlaying(true)
-      videos[currentVideoIdx].play()
-    }
   }
 
   useEffect(() => {
@@ -139,10 +143,10 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   }, [currentVideoIdx, currentTime, playing])
 
   useEffect(() => {
-    for (var video of videos) {
-      video.pause()
+    for (var v of videos) {
+      v.pause()
     }
-    if (!videos[currentVideoIdx] || !ready || !canvasRef?.current) {
+    if (!videos[currentVideoIdx] || !ready || !canvasRef?.current || !video) {
       return
     }
     const fragment = enrichedFragments[currentVideoIdx]
@@ -165,30 +169,13 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       }
       ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
     }, 30)
-  }, [enrichedFragments, currentVideoIdx, width, height, ready, canvasRef?.current])
-
-  const video = loadVideo ? 
-    <div style={{width: '100%', height: '100%', }} ref={contentRef}>
-      <canvas ref={canvasRef} style={{width: '100%'}}  onClick={togglePlay}/>
-    </div>
-    :
-    null
+  }, [enrichedFragments, currentVideoIdx, width, height, ready])
 
   useEffect(() => {
-    if (loadVideo && videos) {
-      videos[currentVideoIdx].load()
-      videos[currentVideoIdx].onloadeddata = () => {
-        const ctx = canvasRef?.current?.getContext('2d')
-        ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
-      }
-    }
     if (!loadVideo && videos) {
         setPlaying(false)
-        for (var v of videos) {
-          v.pause()
-        }
     }
-  }, [loadVideo, videos])
+  }, [loadVideo, videos, contentRef?.current])
     
   
   return (
