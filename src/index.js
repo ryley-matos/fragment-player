@@ -168,7 +168,9 @@ function FragmentPlayerProvider({children, fragments, }) {
         togglePlay,
         currentTime,
         totalLength,
-        video
+        video,
+        videos,
+        playing,
       }}
     >
       {children}
