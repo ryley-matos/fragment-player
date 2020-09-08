@@ -37,8 +37,12 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const currentVideoIdx = getFragmentIdx(enrichedFragments, currentTime)
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
+  const [loadedIdx, setLoadedWrapper] = useState(-1)
 
-  
+  const setLoadedIdx = (idx) => {
+    console.log('loaded idx', idx)
+    setLoadedWrapper(idx)
+  }
 
   const togglePlay = () => {
     if (playing) {
@@ -47,7 +51,6 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     }
     else {
       setPlaying(true)
-      console.log('set playing')
       videos[currentVideoIdx].play()
     }
   }
@@ -79,17 +82,33 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
 
   const videos = useMemo(() => loadVideo ? enrichedFragments?.map((f, idx) => {
     const tmp = document.createElement('video')
-    tmp.src = f.src
-    tmp.preload = "auto"
-    tmp.currentTime = f.fragmentBegin
-    if (!idx || !loadVideo) {
+    if (!idx) {
+      tmp.src = f.src
+      tmp.preload = "auto"
+      tmp.currentTime = f.fragmentBegin
       tmp.load()
       tmp.onloadeddata = () => {
         setReady(true)
+        setLoadedIdx(idx)
       }
     }
     return tmp
   }) : [], [enrichedFragments, canvasRef?.current, loadVideo,])
+
+  useEffect(() => {
+    const loadVidIdx = loadedIdx + 1
+    const v = videos[loadVidIdx]
+    const f = enrichedFragments[loadVidIdx]
+    if (v) {
+      v.src = f.src
+      v.preload="auto"
+      v.currentTime = f.fragmentBegin
+      v.load()
+      v.onloadeddata = () => {
+        setLoadedIdx(loadVidIdx)
+      }
+    }
+  }, [loadedIdx])
   
 
   useEffect(() => {
@@ -110,21 +129,21 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     }
   }, [enrichedFragments, currentVideoIdx, playing, videos])
 
-  useEffect(() => {
-    if (ready) {
-      console.log('Fragment Player Ready!' )
-      videos.slice(1)?.map((video, idx) => {
-        const tmp = video
-        tmp.load()
-        tmp.onloadeddata = () => {
-          console.log('loaded fragment ', idx + 1)
-        }
-      })
-    }
-    else {
-      console.log('Fragment Player Intializing...')
-    }
-  }, [ready, canvasRef?.current])
+  // useEffect(() => {
+  //   if (ready) {
+  //     console.log('Fragment Player Ready!' )
+  //     videos.slice(1)?.map((video, idx) => {
+  //       const tmp = video
+  //       tmp.load()
+  //       tmp.onloadeddata = () => {
+  //         console.log('loaded fragment ', idx + 1)
+  //       }
+  //     })
+  //   }
+  //   else {
+  //     console.log('Fragment Player Intializing...')
+  //   }
+  // }, [ready, canvasRef?.current])
 
 
   const seekTo = (seconds) => {
