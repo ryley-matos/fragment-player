@@ -1,7 +1,23 @@
 import React from 'react'
 import FragmentPlayerProvider, {FragmentPlayerContext} from 'fragment-player'
 
-const fragments = [{"fragmentBegin":3228.728,"fragmentEnd":3235.729,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3815.461,"fragmentEnd":3821.515,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3817.374,"fragmentEnd":3822.128,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":4509.508,"fragmentEnd":4537.675,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":4184.183,"fragmentEnd":4191.184,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":4063.062,"fragmentEnd":4071.064,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3815.314,"fragmentEnd":3822.315,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3744.744,"fragmentEnd":3752.245,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3656.656,"fragmentEnd":3663.657,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3574.073,"fragmentEnd":3581.074,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3233.85,"fragmentEnd":3241.529,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":3228.728,"fragmentEnd":3233.85,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"},{"fragmentBegin":2945.946,"fragmentEnd":2952.947,"src":"https://www.dropbox.com/s/5rs1qxmy5jn35gk/thunder.mp4?dl=1"}]
+const fragments = [
+  {
+    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+    fragmentBegin: 0,
+    fragmentEnd: 5,
+  },
+  {
+    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    fragmentBegin: 1,
+    fragmentEnd: 25,
+  },
+  {
+    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+    fragmentBegin: 1,
+    fragmentEnd: 3,
+  },
+]
 
 const App = () => {
   return (

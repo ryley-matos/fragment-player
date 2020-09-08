@@ -75,7 +75,7 @@ function FragmentPlayerProvider({children, fragments, }) {
       video.load()
     }
     return () => video.removeEventListener('canplay', onCanPlay)
-  }, [currentVideoIdx, playing, videos])
+  }, [enrichedFragments, currentVideoIdx, playing, videos])
 
   useEffect(() => {
     if (ready) {
@@ -147,7 +147,7 @@ function FragmentPlayerProvider({children, fragments, }) {
       }
       ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
     }, 30)
-  }, [currentVideoIdx, width, height, ready])
+  }, [enrichedFragments, currentVideoIdx, width, height, ready])
 
   const video = 
     <div style={{width: '100%', height: '100%',}} ref={contentRef}>
