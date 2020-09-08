@@ -1,5 +1,10 @@
 import React, { useRef, useMemo, useState, useEffect, useLayoutEffect, useCallback }  from 'react';
 
+/*
+  Very roughly based off totimedli's solution on stack overflow:
+    https://stackoverflow.com/questions/34097834/html5-video-how-to-do-a-seamless-play-and-or-loop-of-several-videos
+*/
+
 const enrichFragments = (fragments) => {
   var totalLength = 0
   const enrichedFragments = fragments?.map((f) => {
@@ -22,7 +27,7 @@ const FragmentPlayerContext = React.createContext({})
     src: video source
 */
 
-function FragmentPlayerProvider({children, fragments, }) {
+function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const canvasRef = useRef()
   const contentRef = useRef()
   const drawInterval = useRef()
@@ -49,7 +54,7 @@ function FragmentPlayerProvider({children, fragments, }) {
       width: contentRef?.current?.clientWidth,
       height: contentRef?.current?.clientHeight,
     })
-  }, [])
+  }, [canvasRef?.current, contentRef?.current, loadVideo])
 
   const videos = useMemo(() => enrichedFragments?.map((f, idx) => {
     const tmp = document.createElement('video')
@@ -60,10 +65,14 @@ function FragmentPlayerProvider({children, fragments, }) {
       tmp.load()
       tmp.onloadeddata = () => {
         setReady(true)
+        if (canvasRef?.current) {
+          const ctx = canvasRef?.current?.getContext('2d')
+          ctx.drawImage(videos[currentVideoIdx] ,0, 0, width, height)
+        }
       }
     }
     return tmp
-  }), [enrichedFragments])
+  }), [enrichedFragments, canvasRef?.current, loadVideo])
   
 
   useEffect(() => {
@@ -98,15 +107,17 @@ function FragmentPlayerProvider({children, fragments, }) {
     else {
       console.log('Fragment Player Intializing...')
     }
-  }, [ready])
+  }, [ready, canvasRef?.current])
 
 
   const seekTo = (seconds) => {
+    console.log('seeking to', seconds)
     const newIdx = getFragmentIdx(enrichedFragments, currentTime)
     if (newIdx === currentVideoIdx) {
       const fragment = enrichedFragments[currentVideoIdx]
       videos[currentVideoIdx].currentTime = seconds - fragment.startAt + fragment?.fragmentBegin
     }
+    console.log('setting current time', seconds)
     setCurrentTime(seconds)
   }
 
@@ -131,7 +142,7 @@ function FragmentPlayerProvider({children, fragments, }) {
     for (var video of videos) {
       video.pause()
     }
-    if (!videos[currentVideoIdx] || !ready) {
+    if (!videos[currentVideoIdx] || !ready || !canvasRef?.current) {
       return
     }
     const fragment = enrichedFragments[currentVideoIdx]
@@ -154,12 +165,31 @@ function FragmentPlayerProvider({children, fragments, }) {
       }
       ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
     }, 30)
-  }, [enrichedFragments, currentVideoIdx, width, height, ready])
+  }, [enrichedFragments, currentVideoIdx, width, height, ready, canvasRef?.current])
 
-  const video = 
-    <div style={{width: '100%', height: '100%',}} ref={contentRef}>
+  const video = loadVideo ? 
+    <div style={{width: '100%', height: '100%', }} ref={contentRef}>
       <canvas ref={canvasRef} style={{width: '100%'}}  onClick={togglePlay}/>
     </div>
+    :
+    null
+
+  useEffect(() => {
+    if (loadVideo && videos) {
+      videos[currentVideoIdx].load()
+      videos[currentVideoIdx].onloadeddata = () => {
+        const ctx = canvasRef?.current?.getContext('2d')
+        ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
+      }
+    }
+    if (!loadVideo && videos) {
+        setPlaying(false)
+        for (var v of videos) {
+          v.pause()
+        }
+    }
+  }, [loadVideo, videos])
+    
   
   return (
     <FragmentPlayerContext.Provider

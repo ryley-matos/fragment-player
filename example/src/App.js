@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import FragmentPlayerProvider, {FragmentPlayerContext} from 'fragment-player'
 
 const fragments = [
@@ -20,12 +20,14 @@ const fragments = [
 ]
 
 const App = () => {
+  const [visible, setVisisble] = useState(false)
   return (
-    <FragmentPlayerProvider fragments={fragments}>
+    <FragmentPlayerProvider fragments={fragments} loadVideo={visible}>
       <FragmentPlayerContext.Consumer>
-        {({video, seekTo, currentTime, totalLength}) => {
+        {({video, seekTo, currentTime, totalLength, }) => {
           return (
             <div style={{width: '100%'}}>
+              <button onClick={() => setVisisble(!visible)}>asdf</button>
               {video}
               <input style={{width: '100%'}} type="range" min={0} max={totalLength} value={currentTime} onChange={(e) => seekTo(parseInt(e.target.value))}/>
             </div>
