@@ -64,6 +64,7 @@ function FragmentPlayerProvider({children, fragments, }) {
     }
     return tmp
   }), [enrichedFragments])
+  
 
   useEffect(() => {
     const video = videos[currentVideoIdx]
@@ -74,7 +75,10 @@ function FragmentPlayerProvider({children, fragments, }) {
     if (video.readyState !== 4) {
       video.load()
     }
-    return () => video.removeEventListener('canplay', onCanPlay)
+    return () => {
+      video.pause()
+      video.removeEventListener('canplay', onCanPlay)
+    }
   }, [enrichedFragments, currentVideoIdx, playing, videos])
 
   useEffect(() => {
