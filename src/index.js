@@ -68,6 +68,9 @@ function FragmentPlayerProvider({children, fragments, }) {
 
   useEffect(() => {
     const video = videos[currentVideoIdx]
+    if (!video) {
+      return
+    }
     const onCanPlay = () => video.play()
     if (playing && video) {
       video.addEventListener('canplay', onCanPlay)
