@@ -77,7 +77,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     })
   }, [canvasRef?.current, contentRef?.current, loadVideo, ready])
 
-  const videos = useMemo(() => enrichedFragments?.map((f, idx) => {
+  const videos = useMemo(() => loadVideo ? enrichedFragments?.map((f, idx) => {
     const tmp = document.createElement('video')
     tmp.src = f.src
     tmp.preload = "auto"
@@ -89,7 +89,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       }
     }
     return tmp
-  }), [enrichedFragments, canvasRef?.current, loadVideo,])
+  }) : [], [enrichedFragments, canvasRef?.current, loadVideo,])
   
 
   useEffect(() => {

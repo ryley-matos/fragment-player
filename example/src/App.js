@@ -28,7 +28,7 @@ const App = () => {
         {({seekTo, currentTime, totalLength, video , setSize}) => {
           return (
             <div style={{width: '100%'}}>
-              <button onClick={setVisisble(true)}>Show Video</button>
+              <button onClick={() => setVisisble(true)}>Show Video</button>
               {video}
               <input style={{width: '100%'}} type="range" min={0} max={totalLength} value={currentTime} onChange={(e) => seekTo(parseInt(e.target.value))}/>
             </div>
