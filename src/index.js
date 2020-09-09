@@ -27,6 +27,15 @@ const FragmentPlayerContext = React.createContext({})
     src: video source
 */
 
+const usePrev = value => {
+  const ref = useRef()
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
+}
+
+
 function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const canvasRef = useRef()
   const contentRef = useRef()
@@ -38,6 +47,16 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
   const [loadedIdx, setLoadedWrapper] = useState(-1)
+
+  useEffect(() => {
+    const vidContainer = document.createElement('div')
+    vidContainer.style.display = 'none'
+    vidContainer.id = 'fragment-dummy'
+    document.body.appendChild(
+      vidContainer
+    )
+    return () => document.body.removeChild(vidContainer)
+  }, [])
 
   const setLoadedIdx = (idx) => {
     console.log('loaded idx', idx)
@@ -81,7 +100,14 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   }, [canvasRef?.current, contentRef?.current, loadVideo, ready])
 
   const videos = useMemo(() => loadVideo ? enrichedFragments?.map((f, idx) => {
-    const tmp = document.createElement('video')
+    const id = `${f.fragmentBegin}-${f.fragmentEnd}-${f.src}`
+    const cached = document.getElementById(id)
+    const tmp = cached || document.createElement('video')
+    if (!cached) {
+      tmp.id = id
+      const fragmentDummy = document.getElementById('fragment-dummy')
+      fragmentDummy.appendChild(tmp)
+    }
     if (!idx) {
       tmp.src = f.src
       tmp.preload = "auto"
@@ -93,7 +119,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       }
     }
     return tmp
-  }) : [], [enrichedFragments, canvasRef?.current, loadVideo,])
+  }) : [], [enrichedFragments, canvasRef?.current, loadVideo])
 
   useEffect(() => {
     videos.map((v, idx) => {

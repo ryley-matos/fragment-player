@@ -22,13 +22,15 @@ const fragments = [
 
 const App = () => {
   const [visible, setVisisble] = useState(false)
+  const [edit, setEdit] = useState(false)
   return (
-    <FragmentPlayerProvider fragments={fragments} loadVideo={visible}>
+    <FragmentPlayerProvider fragments={edit ? fragments.slice(1) : fragments} loadVideo={visible}>
       <FragmentPlayerContext.Consumer>
         {({seekTo, currentTime, totalLength, video , setSize}) => {
           return (
             <div style={{width: '100%'}}>
               <button onClick={() => setVisisble(true)}>Show Video</button>
+              <button onClick={() => setEdit(!edit)}>Simulate Edit</button>
               {video}
               <input style={{width: '100%'}} type="range" min={0} max={totalLength} value={currentTime} onChange={(e) => seekTo(parseInt(e.target.value))}/>
             </div>
