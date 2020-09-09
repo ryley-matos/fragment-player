@@ -51,7 +51,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
   const [loadedIdx, setLoadedWrapper] = useState(-1)
-
+  
   useEffect(() => {
     const vidContainer = document.createElement('div')
     vidContainer.style.display = 'none'
@@ -137,7 +137,12 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     if (v) {
       v.src = f.src
       v.preload="auto"
-      v.currentTime = f.fragmentBegin
+      if (loadVidIdx === currentVideoIdx) {
+        v.currentTime = currentTime - f.startAt + f?.fragmentBegin
+      }
+      else {
+        v.currentTime = f.fragmentBegin
+      }
       v.load()
       v.onloadeddata = () => {
         setLoadedIdx(loadVidIdx)
@@ -202,6 +207,9 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       return
     }
     const fragment = enrichedFragments[currentVideoIdx]
+
+    // const newTime = currentTime - fragment?.startAt + fragment?.fragmentBegin
+    // if (newTime === fragment?.fragmentBegin) { //check video hasnt already progressed
     videos[currentVideoIdx].currentTime = currentTime - fragment.startAt + fragment?.fragmentBegin
 
     canvasRef.current.width = width
