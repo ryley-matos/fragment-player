@@ -96,6 +96,17 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   }) : [], [enrichedFragments, canvasRef?.current, loadVideo,])
 
   useEffect(() => {
+    videos.map((v, idx) => {
+      v.addEventListener('abort', () => console.log(v, 'video aborted'))
+      v.addEventListener('suspend', () => console.log(v, 'video suspended'))
+      v.addEventListener('emptied', () => console.log(v, 'video emptied'))
+      v.addEventListener('stalled', () => console.log(v, 'video stalled'))
+      v.addEventListener('error', () => console.log(v, 'video error'))
+      v.addEventListener('loadeddata', () => console.log(v, 'video loaded'))
+    })
+  }, [videos])
+
+  useEffect(() => {
     const loadVidIdx = loadedIdx + 1
     const v = videos[loadVidIdx]
     const f = enrichedFragments[loadVidIdx]
@@ -116,34 +127,18 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     if (!video) {
       return
     }
+    if (video.readyState !== 4) {
+      video.load()
+    }
     const onCanPlay = () => video.play()
     if (playing && video) {
       video.addEventListener('canplay', onCanPlay)
-    }
-    if (video.readyState !== 4) {
-      video.load()
     }
     return () => {
       video.pause()
       video.removeEventListener('canplay', onCanPlay)
     }
   }, [enrichedFragments, currentVideoIdx, playing, videos])
-
-  // useEffect(() => {
-  //   if (ready) {
-  //     console.log('Fragment Player Ready!' )
-  //     videos.slice(1)?.map((video, idx) => {
-  //       const tmp = video
-  //       tmp.load()
-  //       tmp.onloadeddata = () => {
-  //         console.log('loaded fragment ', idx + 1)
-  //       }
-  //     })
-  //   }
-  //   else {
-  //     console.log('Fragment Player Intializing...')
-  //   }
-  // }, [ready, canvasRef?.current])
 
 
   const seekTo = (seconds) => {
@@ -207,6 +202,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
         video,
         videos,
         playing,
+        currentVideoIdx,
       }}
     >
       {children}
