@@ -59,7 +59,6 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   }, [])
 
   const setLoadedIdx = (idx) => {
-    console.log('loaded idx', idx)
     setLoadedWrapper(idx)
   }
 
@@ -99,38 +98,32 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     })
   }, [canvasRef?.current, contentRef?.current, loadVideo, ready])
 
-  const videos = useMemo(() => loadVideo ? enrichedFragments?.map((f, idx) => {
-    const id = `${f.fragmentBegin}-${f.fragmentEnd}-${f.src}`
-    const cached = document.getElementById(id)
-    const tmp = cached || document.createElement('video')
-    if (!cached) {
-      tmp.id = id
-      const fragmentDummy = document.getElementById('fragment-dummy')
-      fragmentDummy.appendChild(tmp)
-    }
-    if (!idx) {
-      tmp.src = f.src
-      tmp.preload = "auto"
-      tmp.currentTime = f.fragmentBegin
-      tmp.load()
-      tmp.onloadeddata = () => {
+  const videos = useMemo(() => {
+    setReady(false)
+    return loadVideo ? enrichedFragments?.map((f, idx) => {
+      const id = `${f.fragmentBegin}-${f.fragmentEnd}-${f.src}`
+      const cached = document.getElementById(id)
+      const tmp = cached || document.createElement('video')
+      if (!idx && !cached) {
+        tmp.src = f.src
+        tmp.preload = "auto"
+        tmp.currentTime = f.fragmentBegin
+        tmp.load()
+        tmp.onloadeddata = () => {
+          setReady(true)
+          setLoadedIdx(idx)
+        }
+      } else if (!idx) {
         setReady(true)
-        setLoadedIdx(idx)
       }
-    }
-    return tmp
-  }) : [], [enrichedFragments, canvasRef?.current, loadVideo])
-
-  useEffect(() => {
-    videos.map((v, idx) => {
-      v.addEventListener('abort', () => console.log(v, 'video aborted'))
-      v.addEventListener('suspend', () => console.log(v, 'video suspended'))
-      v.addEventListener('emptied', () => console.log(v, 'video emptied'))
-      v.addEventListener('stalled', () => console.log(v, 'video stalled'))
-      v.addEventListener('error', () => console.log(v, 'video error'))
-      v.addEventListener('loadeddata', () => console.log(v, 'video loaded'))
-    })
-  }, [videos])
+      if (!cached) {
+        tmp.id = id
+        const fragmentDummy = document.getElementById('fragment-dummy')
+        fragmentDummy.appendChild(tmp)
+      }
+      return tmp
+    }) : []
+  }, [enrichedFragments, canvasRef?.current, loadVideo])
 
   useEffect(() => {
     const loadVidIdx = loadedIdx + 1
@@ -152,9 +145,6 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     const video = videos[currentVideoIdx]
     if (!video) {
       return
-    }
-    if (video.readyState !== 4) {
-      video.load()
     }
     const onCanPlay = () => video.play()
     if (playing && video) {
@@ -204,8 +194,12 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
         setCurrentTime(totalLength)
         togglePlay()
       }
+      else if (newTime <= 0) {
+        setCurrentTime(0)
+        togglePlay()
+      }
       else {
-        setCurrentTime(videos[currentVideoIdx]?.currentTime - enrichedFragments[currentVideoIdx]?.fragmentBegin + enrichedFragments[currentVideoIdx]?.startAt)
+        setCurrentTime(newTime)
       }
       ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
     }, 30)
@@ -223,6 +217,8 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       value={{
         seekTo,
         togglePlay,
+        setPlaying,
+        ready,
         currentTime,
         totalLength,
         video,

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import FragmentPlayerProvider, {FragmentPlayerContext} from 'fragment-player'
-import {AutoSizer} from 'react-virtualized';
 
 const fragments = [
   {
@@ -24,15 +23,18 @@ const App = () => {
   const [visible, setVisisble] = useState(false)
   const [edit, setEdit] = useState(false)
   return (
-    <FragmentPlayerProvider fragments={edit ? fragments.slice(1) : fragments} loadVideo={visible}>
+    <FragmentPlayerProvider fragments={edit ? [{...fragments[0], fragmentEnd: 25}, ...fragments.slice(1)] : fragments} loadVideo={visible}>
       <FragmentPlayerContext.Consumer>
-        {({seekTo, currentTime, totalLength, video , setSize}) => {
+        {({seekTo, currentTime, totalLength, video , setPlaying, ready}) => {
           return (
-            <div style={{width: '100%'}}>
+            <div style={{width: '75%', margin: 'auto'}}>
               <button onClick={() => setVisisble(true)}>Show Video</button>
               <button onClick={() => setEdit(!edit)}>Simulate Edit</button>
+              <button onClick={() => setPlaying(true)}>Play</button>
+              <button onClick={() => setPlaying(false)}>Pause</button>
               {video}
               <input style={{width: '100%'}} type="range" min={0} max={totalLength} value={currentTime} onChange={(e) => seekTo(parseInt(e.target.value))}/>
+              <div>{ready ? 'Video Ready' : 'Video Loading...'}</div>
             </div>
           )
         }}
