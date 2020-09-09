@@ -40,6 +40,10 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const canvasRef = useRef()
   const contentRef = useRef()
   const drawInterval = useRef()
+
+  //handles pausing while seeking
+  const seekTimeout = useRef({tmpPlaying: undefined, timeout: undefined})
+
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const {totalLength, enrichedFragments} = useMemo(() => enrichFragments(fragments), [fragments])
@@ -115,6 +119,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
         }
       } else if (!idx) {
         setReady(true)
+        setLoadedIdx(idx)
       }
       if (!cached) {
         tmp.id = id
@@ -157,7 +162,22 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   }, [enrichedFragments, currentVideoIdx, playing, videos])
 
 
+  //pause for ms then return to original play state
+  const tmpPause = (ms) => {
+    if (seekTimeout?.current?.tmpPlaying === undefined) {
+      seekTimeout.current.tmpPlaying = playing
+    }
+    setPlaying(false)
+    clearTimeout(seekTimeout.current.timeout)
+    seekTimeout.current.timeout = setTimeout(() => {
+      setPlaying(seekTimeout?.current?.tmpPlaying)
+      seekTimeout.current.tmpPlaying = undefined
+    }, ms)
+  }
+
+
   const seekTo = (seconds) => {
+    tmpPause(100)
     const newIdx = getFragmentIdx(enrichedFragments, currentTime)
     if (newIdx === currentVideoIdx) {
       const fragment = enrichedFragments[currentVideoIdx]
@@ -165,6 +185,8 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     }
     setCurrentTime(seconds)
   }
+
+  
 
   useEffect(() => {
     if (playing) {
@@ -225,6 +247,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
         videos,
         playing,
         currentVideoIdx,
+        tmpPause,
       }}
     >
       {children}

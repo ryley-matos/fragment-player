@@ -18,12 +18,12 @@ const fragments = [
     fragmentEnd: 3,
   },
 ]
-
+  
 const App = () => {
   const [visible, setVisisble] = useState(false)
   const [edit, setEdit] = useState(false)
   return (
-    <FragmentPlayerProvider fragments={edit ? [{...fragments[0], fragmentEnd: 25}, ...fragments.slice(1)] : fragments} loadVideo={visible}>
+    <FragmentPlayerProvider fragments={edit ? [...fragments.slice(0, 1), {...fragments[1], fragmentEnd: fragments[1].fragmentEnd + 10}, ...fragments.slice(2)] : fragments} loadVideo={visible}>
       <FragmentPlayerContext.Consumer>
         {({seekTo, currentTime, totalLength, video , setPlaying, ready}) => {
           return (
