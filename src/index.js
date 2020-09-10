@@ -51,16 +51,21 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const [{ width, height }, setSize] = useState({})
   const [ready, setReady] = useState(false)
   const [loadedIdx, setLoadedWrapper] = useState(-1)
-  
+
   useEffect(() => {
-    const vidContainer = document.createElement('div')
+    const vidContainer = document.getElementById('fragment-dummy') || document.createElement('div')
     vidContainer.style.display = 'none'
     vidContainer.id = 'fragment-dummy'
-    document.body.appendChild(
+    const tmp = document.body.appendChild(
       vidContainer
     )
-    return () => document.body.removeChild(vidContainer)
-  }, [])
+    if (loadVideo) {
+      return () => {
+        document.body.removeChild(tmp)
+        clearInterval(drawInterval)
+      }
+    }
+  }, [loadVideo])
 
   const setLoadedIdx = (idx) => {
     setLoadedWrapper(idx)
@@ -92,7 +97,9 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       })
     }
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+    }
   })
 
   useEffect(() => {
@@ -194,10 +201,10 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   
 
   useEffect(() => {
-    if (playing) {
+    if (playing && loadVideo) {
       videos[currentVideoIdx].play()
     }
-  }, [currentVideoIdx, currentTime, playing])
+  }, [currentVideoIdx, currentTime, playing, loadVideo])
 
   useEffect(() => {
     for (var v of videos) {
@@ -207,9 +214,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       return
     }
     const fragment = enrichedFragments[currentVideoIdx]
-
-    // const newTime = currentTime - fragment?.startAt + fragment?.fragmentBegin
-    // if (newTime === fragment?.fragmentBegin) { //check video hasnt already progressed
+    
     videos[currentVideoIdx].currentTime = currentTime - fragment.startAt + fragment?.fragmentBegin
 
     canvasRef.current.width = width

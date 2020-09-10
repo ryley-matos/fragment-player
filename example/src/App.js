@@ -32,12 +32,12 @@ const App = () => {
         {({seekTo, currentTime, totalLength, video , setPlaying, ready}) => {
           return (
             <div style={{width: '75%', margin: 'auto'}}>
-              <button onClick={() => setVisisble(true)}>Show Video</button>
+              <button onClick={() => setVisisble(!visible)}>Show Video</button>
               <button onClick={() => setEdit(!edit)}>Simulate Edit</button>
               <button onClick={() => setPlaying(true)}>Play</button>
               <button onClick={() => setPlaying(false)}>Pause</button>
               <button onClick={() => setData({...data, extra: (data?.extra || '') + 'asdf'})}>change data</button>
-              {video}
+              <div style={{width: 1600, height: 900}} >{video}</div>
               <input style={{width: '100%'}} type="range" min={0} max={totalLength} value={currentTime} onChange={(e) => seekTo(parseInt(e.target.value))}/>
               <div>{ready ? 'Video Ready' : 'Video Loading...'}</div>
             </div>
