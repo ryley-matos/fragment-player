@@ -35,6 +35,14 @@ const usePrev = value => {
   return ref.current
 }
 
+const getOrCreateDummy = () => {
+  const vidContainer = document.getElementById('fragment-dummy') || document.createElement('div')
+  vidContainer.style.display = 'none'
+  vidContainer.id = 'fragment-dummy'
+  document.body.appendChild(vidContainer)
+  return vidContainer
+}
+
 
 function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const canvasRef = useRef()
@@ -53,9 +61,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
   const [loadedIdx, setLoadedWrapper] = useState(-1)
 
   useEffect(() => {
-    const vidContainer = document.getElementById('fragment-dummy') || document.createElement('div')
-    vidContainer.style.display = 'none'
-    vidContainer.id = 'fragment-dummy'
+    const vidContainer = getOrCreateDummy()
     const tmp = document.body.appendChild(
       vidContainer
     )
@@ -130,7 +136,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       }
       if (!cached) {
         tmp.id = id
-        const fragmentDummy = document.getElementById('fragment-dummy')
+        const fragmentDummy = getOrCreateDummy()
         fragmentDummy.appendChild(tmp)
       }
       return tmp
@@ -187,7 +193,6 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
     }, ms)
   }
 
-
   const seekTo = (seconds) => {
     tmpPause(100)
     const newIdx = getFragmentIdx(enrichedFragments, currentTime)
@@ -211,6 +216,7 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       v.pause()
     }
     if (!videos[currentVideoIdx] || !ready || !canvasRef?.current || !video) {
+      clearInterval(drawInterval?.current)
       return
     }
     const fragment = enrichedFragments[currentVideoIdx]
@@ -227,18 +233,18 @@ function FragmentPlayerProvider({children, fragments, loadVideo}) {
       const newTime = videos[currentVideoIdx]?.currentTime - enrichedFragments[currentVideoIdx]?.fragmentBegin + enrichedFragments[currentVideoIdx]?.startAt
       if (newTime >= totalLength) {
         setCurrentTime(totalLength)
-        togglePlay()
+        if (playing) togglePlay()
       }
       else if (newTime <= 0) {
         setCurrentTime(0)
-        togglePlay()
+        if (playing) togglePlay()
       }
       else {
         setCurrentTime(newTime)
       }
       ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
     }, 30)
-  }, [enrichedFragments, currentVideoIdx, width, height, ready])
+  }, [enrichedFragments, currentVideoIdx, width, height, ready, playing])
 
   useEffect(() => {
     if (!loadVideo && videos) {
