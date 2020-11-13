@@ -29,17 +29,14 @@ const App = () => {
   return (
     <FragmentPlayerProvider fragments={edit ? [...fragments.slice(0, 1), {...fragments[1], fragmentEnd: fragments[1].fragmentEnd + 10}, ...fragments.slice(2)] : fragments} loadVideo={visible}>
       <FragmentPlayerContext.Consumer>
-        {({seekTo, currentTime, totalLength, video , setPlaying, ready}) => {
+        {({Video, seekTo, currentTime, totalLength, playing, togglePlay}) => {
           return (
             <div style={{width: '75%', margin: 'auto'}}>
-              <button onClick={() => setVisisble(!visible)}>Show Video</button>
               <button onClick={() => setEdit(!edit)}>Simulate Edit</button>
-              <button onClick={() => setPlaying(true)}>Play</button>
-              <button onClick={() => setPlaying(false)}>Pause</button>
+              <button onClick={togglePlay}>{playing ? 'Pause' : 'Play'}</button>
               <button onClick={() => setData({...data, extra: (data?.extra || '') + 'asdf'})}>change data</button>
-              <div style={{width: 1600, height: 900}} >{video}</div>
+              <div style={{width: 1600, height: 900}} >{Video}</div>
               <input style={{width: '100%'}} type="range" min={0} max={totalLength} value={currentTime} onChange={(e) => seekTo(parseInt(e.target.value))}/>
-              <div>{ready ? 'Video Ready' : 'Video Loading...'}</div>
             </div>
           )
         }}

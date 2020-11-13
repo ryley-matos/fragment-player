@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useEffect, useLayoutEffect, useCallback }  from 'react';
+import React, {useMemo, useState, useEffect}  from 'react';
 
 /*
   Very roughly based off totimedli's solution on stack overflow:
@@ -27,246 +27,117 @@ const FragmentPlayerContext = React.createContext({})
     src: video source
 */
 
-const usePrev = value => {
-  const ref = useRef()
-  useEffect(() => {
-    ref.current = value
-  })
-  return ref.current
-}
 
-const getOrCreateDummy = () => {
-  const vidContainer = document.getElementById('fragment-dummy') || document.createElement('div')
-  vidContainer.style.display = 'none'
-  vidContainer.id = 'fragment-dummy'
-  document.body.appendChild(vidContainer)
-  return vidContainer
-}
+function FragmentPlayerProvider({children, fragments}) {
 
-
-function FragmentPlayerProvider({children, fragments, loadVideo}) {
-  const canvasRef = useRef()
-  const contentRef = useRef()
-  const drawInterval = useRef()
-
-  //handles pausing while seeking
-  const seekTimeout = useRef({tmpPlaying: undefined, timeout: undefined})
-
-  const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+
+  const [playing, setPlaying] = useState()
+
   const {totalLength, enrichedFragments} = useMemo(() => enrichFragments(fragments), [fragments])
-  const currentVideoIdx = getFragmentIdx(enrichedFragments, currentTime)
-  const [{ width, height }, setSize] = useState({})
-  const [ready, setReady] = useState(false)
-  const [loadedIdx, setLoadedWrapper] = useState(-1)
 
-  useEffect(() => {
-    const vidContainer = getOrCreateDummy()
-    const tmp = document.body.appendChild(
-      vidContainer
-    )
-    if (loadVideo) {
-      return () => {
-        document.body.removeChild(tmp)
-        clearInterval(drawInterval)
-      }
+  const currentFragmentIdx = useMemo(() => getFragmentIdx(enrichedFragments, currentTime))
+
+  const videoRefs = useMemo(() => {
+    let tmp = {}
+    for (var f of fragments) {
+      tmp[`fragment-${f.fragmentBegin}-${f.fragmentEnd}`] = React.createRef()
     }
-  }, [loadVideo])
-
-  const setLoadedIdx = (idx) => {
-    setLoadedWrapper(idx)
-  }
-
-  const togglePlay = () => {
-    if (playing) {
-      setPlaying(false)
-      videos[currentVideoIdx].pause()
-    }
-    else {
-      setPlaying(true)
-      videos[currentVideoIdx].play()
-    }
-  }
-
-  const video = loadVideo ? 
-    <div style={{width: '100%', height: '100%', }} ref={contentRef}>
-      <canvas ref={canvasRef} style={{width: '100%'}}  onClick={togglePlay}/>
-    </div>
-    :
-    null
-
-  useLayoutEffect(() => {
-    const onResize = () => {
-      setSize({
-        width: contentRef?.current?.clientWidth,
-        height: contentRef?.current?.clientHeight,
-      })
-    }
-    window.addEventListener('resize', onResize)
-    return () => {
-      window.removeEventListener('resize', onResize)
-    }
-  })
-
-  useEffect(() => {
-    setSize({
-      width: contentRef?.current?.clientWidth,
-      height: contentRef?.current?.clientHeight,
-    })
-  }, [canvasRef?.current, contentRef?.current, loadVideo, ready])
-
-  const videos = useMemo(() => {
-    setReady(false)
-    return loadVideo ? enrichedFragments?.map((f, idx) => {
-      const id = `${f.fragmentBegin}-${f.fragmentEnd}-${f.src}`
-      const cached = document.getElementById(id)
-      const tmp = cached || document.createElement('video')
-      if (!idx && !cached) {
-        tmp.src = f.src
-        tmp.preload = "auto"
-        tmp.currentTime = f.fragmentBegin
-        tmp.load()
-        tmp.onloadeddata = () => {
-          setReady(true)
-          setLoadedIdx(idx)
-        }
-      } else if (!idx) {
-        setReady(true)
-        setLoadedIdx(idx)
-      }
-      if (!cached) {
-        tmp.id = id
-        const fragmentDummy = getOrCreateDummy()
-        fragmentDummy.appendChild(tmp)
-      }
-      return tmp
-    }) : []
-  }, [enrichedFragments, canvasRef?.current, loadVideo])
-
-  useEffect(() => {
-    const loadVidIdx = loadedIdx + 1
-    const v = videos[loadVidIdx]
-    const f = enrichedFragments[loadVidIdx]
-    if (v) {
-      v.src = f.src
-      v.preload="auto"
-      if (loadVidIdx === currentVideoIdx) {
-        v.currentTime = currentTime - f.startAt + f?.fragmentBegin
-      }
-      else {
-        v.currentTime = f.fragmentBegin
-      }
-      v.load()
-      v.onloadeddata = () => {
-        setLoadedIdx(loadVidIdx)
-      }
-    }
-  }, [loadedIdx])
+    return tmp
+  }, [fragments])
   
+  const videos = useMemo(() => (
+    enrichedFragments.map((f, idx) => {
+      const id = `fragment-${f.fragmentBegin}-${f.fragmentEnd}`
+      return (
+        <video 
+          ref={videoRefs[id]} 
+          id={id} 
+          src={`${f.src}#t=${f.fragmentBegin},${f.fragmentEnd}`}
+          playsInline 
+          muted={"true"}
+          style={{width: '100%', position: 'absolute', top: 0, left: 0, zIndex: currentFragmentIdx === idx ? 10 : 0}}
+          onTimeUpdate={() => {
+            if (playing && currentFragmentIdx === idx) {
+              const newTime = videoRefs[id]?.current?.currentTime - f.fragmentBegin + f.startAt
+              console.log({newTime, totalLength})
+              if (newTime >= totalLength) {
+                setCurrentTime(totalLength)
+                setPlaying(false)
+              }
+              else {
+                setCurrentTime(newTime)
+              }
+            }
+          }}
+        />
+      )
+    })
+  ), [enrichedFragments, playing, currentFragmentIdx])
 
   useEffect(() => {
-    const video = videos[currentVideoIdx]
-    if (!video) {
-      return
+    const f = enrichedFragments[currentFragmentIdx]
+    console.log(f)
+    for (var key in videoRefs) {
+      videoRefs[key]?.current?.pause()
     }
-    const onCanPlay = () => video.play()
-    if (playing && video) {
-      video.addEventListener('canplay', onCanPlay)
+    if (f && playing) {
+      const id = `fragment-${f.fragmentBegin}-${f.fragmentEnd}`
+      console.log('f.currentTime', currentTime)
+      const diff = currentTime - f.startAt
+      videoRefs[id].current.currentTime = f.fragmentBegin + diff
+      videoRefs[id]?.current?.play()
     }
-    return () => {
-      video.pause()
-      video.removeEventListener('canplay', onCanPlay)
-    }
-  }, [enrichedFragments, currentVideoIdx, playing, videos])
-
-
-  //pause for ms then return to original play state
-  const tmpPause = (ms) => {
-    if (seekTimeout?.current?.tmpPlaying === undefined) {
-      seekTimeout.current.tmpPlaying = playing
-    }
-    setPlaying(false)
-    clearTimeout(seekTimeout.current.timeout)
-    seekTimeout.current.timeout = setTimeout(() => {
-      setPlaying(seekTimeout?.current?.tmpPlaying)
-      seekTimeout.current.tmpPlaying = undefined
-    }, ms)
-  }
+  }, [currentFragmentIdx, playing])
 
   const seekTo = (seconds) => {
-    tmpPause(100)
-    const newIdx = getFragmentIdx(enrichedFragments, currentTime)
-    if (newIdx === currentVideoIdx) {
-      const fragment = enrichedFragments[currentVideoIdx]
-      videos[currentVideoIdx].currentTime = seconds - fragment.startAt + fragment?.fragmentBegin
+    for (var key in videoRefs) {
+      videoRefs[key]?.current?.pause()
+    }
+    const newFragment = enrichedFragments[
+      getFragmentIdx(enrichedFragments, seconds)
+    ]
+    const id = `fragment-${newFragment.fragmentBegin}-${newFragment.fragmentEnd}`
+    const diff = seconds - newFragment.startAt
+    videoRefs[id].current.currentTime = newFragment.fragmentBegin + diff
+    if (playing) {
+      videoRefs[id]?.current?.play()
     }
     setCurrentTime(seconds)
   }
 
-  
-
-  useEffect(() => {
-    if (playing && loadVideo) {
-      videos[currentVideoIdx].play()
+  const togglePlay = () => {
+    if (playing) {
+      const f = enrichedFragments[currentFragmentIdx]
+      const id = `fragment-${f.fragmentBegin}-${f.fragmentEnd}`
+      videoRefs[id]?.current?.pause()
+      setPlaying(false)
     }
-  }, [currentVideoIdx, currentTime, playing, loadVideo])
-
-  useEffect(() => {
-    for (var v of videos) {
-      v.pause()
+    else {
+      const f = enrichedFragments[currentFragmentIdx]
+      const id = `fragment-${f.fragmentBegin}-${f.fragmentEnd}`
+      videoRefs[id]?.current?.play()
+      setPlaying(true)
     }
-    if (!videos[currentVideoIdx] || !ready || !canvasRef?.current || !video) {
-      clearInterval(drawInterval?.current)
-      return
-    }
-    const fragment = enrichedFragments[currentVideoIdx]
-    
-    videos[currentVideoIdx].currentTime = currentTime - fragment.startAt + fragment?.fragmentBegin
+  }
 
-    canvasRef.current.width = width
-    canvasRef.current.height = height
-    const ctx = canvasRef?.current?.getContext('2d')
+  const Video = useMemo(
+    () => (
+      <div style={{position: 'relative'}}>
+        {videos}
+      </div>
+   ), [videos])
 
-    ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
-    clearInterval(drawInterval?.current)
-    drawInterval.current = setInterval(() => {
-      const newTime = videos[currentVideoIdx]?.currentTime - enrichedFragments[currentVideoIdx]?.fragmentBegin + enrichedFragments[currentVideoIdx]?.startAt
-      if (newTime >= totalLength) {
-        setCurrentTime(totalLength)
-        if (playing) togglePlay()
-      }
-      else if (newTime <= 0) {
-        setCurrentTime(0)
-        if (playing) togglePlay()
-      }
-      else {
-        setCurrentTime(newTime)
-      }
-      ctx.drawImage(videos[currentVideoIdx],0, 0, width, height)
-    }, 30)
-  }, [enrichedFragments, currentVideoIdx, width, height, ready, playing])
-
-  useEffect(() => {
-    if (!loadVideo && videos) {
-        setPlaying(false)
-    }
-  }, [loadVideo, videos, contentRef?.current])
-    
-  
   return (
     <FragmentPlayerContext.Provider
       value={{
+        Video,
+        totalLength,
+        currentTime,
+        playing,
+        enrichedFragments,
         seekTo,
         togglePlay,
-        setPlaying,
-        ready,
-        currentTime,
-        totalLength,
-        video,
-        videos,
-        playing,
-        currentVideoIdx,
-        tmpPause,
       }}
     >
       {children}
