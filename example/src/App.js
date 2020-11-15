@@ -20,14 +20,13 @@ const FRAGMENTS = [
 ]
   
 const App = () => {
-  const [visible, setVisisble] = useState(false)
   const [edit, setEdit] = useState(false)
   const [data, setData] = useState({
     fragments: FRAGMENTS,
   })
   const fragments = JSON.parse(JSON.stringify(data?.fragments))
   return (
-    <FragmentPlayerProvider fragments={edit ? [...fragments.slice(0, 1), {...fragments[1], fragmentEnd: fragments[1].fragmentEnd + 10}, ...fragments.slice(2)] : fragments} loadVideo={visible}>
+    <FragmentPlayerProvider fragments={edit ? [...fragments.slice(0, 1), {...fragments[1], fragmentEnd: fragments[1].fragmentEnd + 10}, ...fragments.slice(2)] : fragments}>
       <FragmentPlayerContext.Consumer>
         {({Video, seekTo, currentTime, totalLength, playing, togglePlay}) => {
           return (

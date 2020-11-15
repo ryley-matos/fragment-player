@@ -27,7 +27,6 @@ const FragmentPlayerContext = React.createContext({})
     src: video source
 */
 
-
 function FragmentPlayerProvider({children, fragments}) {
 
   const [currentTime, setCurrentTime] = useState(0)
@@ -54,13 +53,16 @@ function FragmentPlayerProvider({children, fragments}) {
           ref={videoRefs[id]} 
           id={id} 
           src={`${f.src}#t=${f.fragmentBegin},${f.fragmentEnd}`}
+          onLoadedMetadata={() => {
+            videoRefs[id].current.currentTime = f.fragmentBegin
+          }}
           playsInline 
           muted={"true"}
           style={{width: '100%', position: 'absolute', top: 0, left: 0, zIndex: currentFragmentIdx === idx ? 10 : 0}}
           onTimeUpdate={() => {
             if (playing && currentFragmentIdx === idx) {
-              const newTime = videoRefs[id]?.current?.currentTime - f.fragmentBegin + f.startAt
-              console.log({newTime, totalLength})
+              const tmpTime = videoRefs[id].current.currentTime < f.fragmentBegin ? f.fragmentBegin : videoRefs[id].current.currentTime
+              const newTime = tmpTime - f.fragmentBegin + f.startAt
               if (newTime >= totalLength) {
                 setCurrentTime(totalLength)
                 setPlaying(false)
@@ -77,13 +79,11 @@ function FragmentPlayerProvider({children, fragments}) {
 
   useEffect(() => {
     const f = enrichedFragments[currentFragmentIdx]
-    console.log(f)
     for (var key in videoRefs) {
       videoRefs[key]?.current?.pause()
     }
     if (f && playing) {
       const id = `fragment-${f.fragmentBegin}-${f.fragmentEnd}`
-      console.log('f.currentTime', currentTime)
       const diff = currentTime - f.startAt
       videoRefs[id].current.currentTime = f.fragmentBegin + diff
       videoRefs[id]?.current?.play()
