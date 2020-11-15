@@ -16,7 +16,7 @@ const enrichFragments = (fragments) => {
   return {totalLength, enrichedFragments}
 }
 
-const getFragmentIdx = (fragments, seconds) => fragments.findIndex(({startAt, endAt}) => seconds >= startAt && seconds <= endAt)
+const getFragmentIdx = (fragments, seconds) => fragments.findIndex(({startAt, endAt}) => seconds >= startAt && seconds < endAt)
 
 const FragmentPlayerContext = React.createContext({})
 
@@ -59,8 +59,7 @@ function FragmentPlayerProvider({children, fragments}) {
           playsInline 
           muted={"true"}
           style={{width: '100%', position: 'absolute', top: 0, left: 0, zIndex: currentFragmentIdx === idx ? 10 : 0}}
-          onTimeUpdate={() => {
-            if (playing && currentFragmentIdx === idx) {
+          onTimeUpdate={ playing && currentFragmentIdx === idx ? () => {
               const tmpTime = videoRefs[id].current.currentTime < f.fragmentBegin ? f.fragmentBegin : videoRefs[id].current.currentTime
               const newTime = tmpTime - f.fragmentBegin + f.startAt
               if (newTime >= totalLength) {
@@ -70,8 +69,7 @@ function FragmentPlayerProvider({children, fragments}) {
               else {
                 setCurrentTime(newTime)
               }
-            }
-          }}
+          } : null}
         />
       )
     })
