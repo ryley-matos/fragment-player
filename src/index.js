@@ -35,7 +35,7 @@ function FragmentPlayerProvider({children, fragments}) {
 
   const {totalLength, enrichedFragments} = useMemo(() => enrichFragments(fragments), [fragments])
 
-  const currentFragmentIdx = useMemo(() => getFragmentIdx(enrichedFragments, currentTime), [enrichedFragments, totalLength])
+  const currentFragmentIdx = useMemo(() => getFragmentIdx(enrichedFragments, currentTime), [enrichedFragments, totalLength, currentTime])
 
   const videoRefs = useMemo(() => {
     let tmp = {}
