@@ -46,7 +46,7 @@ function FragmentPlayerProvider({children, fragments}) {
   }, [fragments])
 
   const currentVideoRef = useMemo(() => {
-    const {fragmentBegin, fragmentEnd} = enrichedFragments[currentFragmentIdx]
+    const {fragmentBegin, fragmentEnd} = enrichedFragments[currentFragmentIdx] || {}
     return videoRefs[`fragment-${fragmentBegin}-${fragmentEnd}`]
   }, [videoRefs, currentFragmentIdx])
   
